@@ -10,7 +10,7 @@ pub enum ReceiptEnvelope<T = Log> {
 }
 
 impl<T> TxReceipt<T> for ReceiptEnvelope<T> {
-    fn status_or_post_state(&self) -> alloy::consensus::Eip658Value {
+    fn status_or_post_state(&self) -> &alloy::consensus::Eip658Value {
         match self {
             ReceiptEnvelope::Native(re) => re.status_or_post_state(),
         }

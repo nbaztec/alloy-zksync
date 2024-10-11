@@ -250,8 +250,8 @@ impl Transaction for TxEip712 {
         (self.nonce % U256::from(u64::MAX)).try_into().unwrap()
     }
 
-    fn gas_limit(&self) -> u64 {
-        self.gas_limit
+    fn gas_limit(&self) -> u128 {
+        self.gas_limit as u128
     }
 
     fn gas_price(&self) -> Option<u128> {
@@ -379,7 +379,7 @@ impl From<TxEip712> for alloy::rpc::types::transaction::TransactionRequest {
             transaction_type: Some(tx.tx_type() as u8),
             chain_id: Some(tx.chain_id),
             nonce: Some((tx.nonce % U256::from(u64::MAX)).try_into().unwrap()), // TODO: Is decomposed nonce fine here?
-            gas: Some(tx.gas_limit),
+            gas: Some(tx.gas_limit as u128),
             max_fee_per_gas: Some(tx.max_fee_per_gas),
             max_priority_fee_per_gas: Some(tx.max_priority_fee_per_gas),
             to: Some(tx.to.into()),

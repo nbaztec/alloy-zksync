@@ -1,8 +1,21 @@
 use alloy::primitives::{Address, Bytes, FixedBytes, U256};
 use alloy::rlp::{Decodable, Encodable, Header};
+use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
 
 use super::utils::{hash_bytecode, BytecodeHashError};
+
+// Serialize `Bytes` as `Vec<u8>` as they are encoded as hex string for human-friendly serializers
+fn serialize_bytes<S: serde::Serializer>(
+    bytes: &Vec<Bytes>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    let mut seq = serializer.serialize_seq(Some(bytes.len()))?;
+    for e in bytes {
+        seq.serialize_element(&e.0)?;
+    }
+    seq.end()
+}
 
 // TODO: The structure should be correct by construction, e.g. we should not allow
 // creating or deserializing meta that has invalid factory deps.
@@ -11,6 +24,7 @@ use super::utils::{hash_bytecode, BytecodeHashError};
 pub struct Eip712Meta {
     pub gas_per_pubdata: U256,
     #[serde(default)]
+    #[serde(serialize_with = "serialize_bytes")]
     pub factory_deps: Vec<Bytes>,
     pub custom_signature: Option<Bytes>,
     pub paymaster_params: Option<PaymasterParams>,

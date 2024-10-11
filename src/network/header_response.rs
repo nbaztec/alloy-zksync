@@ -23,7 +23,7 @@ impl alloy::network::HeaderResponse for HeaderResponse {
         self.inner.extra_data()
     }
 
-    fn base_fee_per_gas(&self) -> Option<u64> {
+    fn base_fee_per_gas(&self) -> Option<u128> {
         self.inner.base_fee_per_gas()
     }
 
@@ -35,7 +35,7 @@ impl alloy::network::HeaderResponse for HeaderResponse {
         self.inner.coinbase()
     }
 
-    fn gas_limit(&self) -> u64 {
+    fn gas_limit(&self) -> u128 {
         self.inner.gas_limit()
     }
 

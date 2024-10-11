@@ -1,7 +1,7 @@
 use alloy::network::{
     Network, TransactionBuilder, TransactionBuilderError, UnbuiltTransactionError,
 };
-use alloy::primitives::{TxKind, B256, U256};
+use alloy::primitives::{Bytes, TxKind, B256, U256};
 
 use crate::contracts::l2::contract_deployer::CONTRACT_DEPLOYER_ADDRESS;
 use crate::network::{tx_type::TxType, unsigned_tx::eip712::TxEip712};
@@ -10,6 +10,7 @@ use super::unsigned_tx::eip712::{hash_bytecode, BytecodeHashError};
 use super::{unsigned_tx::eip712::Eip712Meta, Zksync};
 
 #[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TransactionRequest {
     #[serde(flatten)]
     base: alloy::rpc::types::transaction::TransactionRequest,
@@ -19,10 +20,22 @@ pub struct TransactionRequest {
 
 // TODO: Extension trait for `TransactionBuilder`?
 impl TransactionRequest {
+    pub fn base(mut self, base: alloy::rpc::types::transaction::TransactionRequest) -> Self {
+        self.base = base;
+        self
+    }
+
     pub fn with_gas_per_pubdata(mut self, gas_per_pubdata: U256) -> Self {
         self.eip_712_meta
             .get_or_insert_with(Eip712Meta::default)
             .gas_per_pubdata = gas_per_pubdata;
+        self
+    }
+
+    pub fn with_factory_deps(mut self, factory_deps: Vec<Bytes>) -> Self {
+        self.eip_712_meta
+            .get_or_insert_with(Eip712Meta::default)
+            .factory_deps = factory_deps;
         self
     }
 
@@ -177,11 +190,11 @@ impl TransactionBuilder<Zksync> for TransactionRequest {
         TransactionBuilder::set_max_priority_fee_per_gas(&mut self.base, max_priority_fee_per_gas)
     }
 
-    fn gas_limit(&self) -> Option<u64> {
+    fn gas_limit(&self) -> Option<u128> {
         TransactionBuilder::gas_limit(&self.base)
     }
 
-    fn set_gas_limit(&mut self, gas_limit: u64) {
+    fn set_gas_limit(&mut self, gas_limit: u128) {
         TransactionBuilder::set_gas_limit(&mut self.base, gas_limit)
     }
 
@@ -288,7 +301,12 @@ impl TransactionBuilder<Zksync> for TransactionRequest {
             let tx = TxEip712 {
                 chain_id: self.base.chain_id.unwrap(),
                 nonce: U256::from(self.base.nonce.unwrap()), // TODO: Deployment nonce?
-                gas_limit: self.base.gas.unwrap(),
+                gas_limit: self
+                    .base
+                    .gas
+                    .map(|gas| u64::try_from(gas).ok())
+                    .flatten()
+                    .unwrap_or_default(),
                 max_fee_per_gas: self.base.max_fee_per_gas.unwrap(),
                 max_priority_fee_per_gas: self.base.max_priority_fee_per_gas.unwrap(),
                 eip712_meta: self.eip_712_meta.unwrap(),

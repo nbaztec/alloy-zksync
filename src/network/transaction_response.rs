@@ -1,3 +1,4 @@
+use alloy::primitives::{Bytes, U256};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -8,69 +9,73 @@ pub struct TransactionResponse {
 
 impl alloy::consensus::Transaction for TransactionResponse {
     fn chain_id(&self) -> Option<alloy::primitives::ChainId> {
-        self.inner.chain_id()
+        self.inner.chain_id
     }
 
     fn nonce(&self) -> u64 {
-        self.inner.nonce()
+        self.inner.nonce
     }
 
-    fn gas_limit(&self) -> u64 {
-        self.inner.gas_limit()
+    fn gas_limit(&self) -> u128 {
+        self.inner.gas
     }
 
     fn gas_price(&self) -> Option<u128> {
-        self.inner.gas_price()
+        self.inner.gas_price
     }
 
     fn max_fee_per_gas(&self) -> u128 {
-        self.inner.max_fee_per_gas()
+        self.inner.max_fee_per_gas.unwrap_or_default()
     }
 
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
-        self.inner.max_priority_fee_per_gas()
+        self.inner.max_priority_fee_per_gas
     }
 
     fn max_fee_per_blob_gas(&self) -> Option<u128> {
-        self.inner.max_fee_per_blob_gas()
+        self.inner.max_fee_per_blob_gas
     }
 
     fn priority_fee_or_price(&self) -> u128 {
-        self.inner.priority_fee_or_price()
+        self.inner.max_priority_fee_per_gas.unwrap_or_default()
     }
 
     fn to(&self) -> alloy::primitives::TxKind {
-        self.inner.to()
+        self.inner.to.into()
     }
 
     fn value(&self) -> alloy::primitives::U256 {
-        self.inner.value()
+        self.inner.value
     }
 
     fn input(&self) -> &[u8] {
-        self.inner.input()
+        self.inner.input.as_ref()
     }
 
     fn ty(&self) -> u8 {
-        self.inner.ty()
+        self.inner.transaction_type.unwrap_or_default()
     }
 
     fn access_list(&self) -> Option<&alloy::rpc::types::AccessList> {
-        self.inner.access_list()
+        self.inner.access_list.as_ref()
     }
 
     fn blob_versioned_hashes(&self) -> Option<&[alloy::primitives::B256]> {
-        self.inner.blob_versioned_hashes()
+        self.inner
+            .blob_versioned_hashes
+            .as_ref()
+            .map(|value| value.as_slice())
     }
 
     fn authorization_list(&self) -> Option<&[alloy::eips::eip7702::SignedAuthorization]> {
-        self.inner.authorization_list()
+        self.inner
+            .authorization_list
+            .as_ref()
+            .map(|value| value.as_slice())
     }
 }
 
 impl alloy::network::TransactionResponse for TransactionResponse {
-    type Signature = alloy::rpc::types::Signature;
-
     fn tx_hash(&self) -> alloy::primitives::TxHash {
         self.inner.tx_hash()
     }
@@ -83,19 +88,15 @@ impl alloy::network::TransactionResponse for TransactionResponse {
         self.inner.to()
     }
 
-    fn block_hash(&self) -> Option<alloy::primitives::BlockHash> {
-        self.inner.block_hash()
+    fn value(&self) -> U256 {
+        self.inner.value
     }
 
-    fn block_number(&self) -> Option<u64> {
-        self.inner.block_number()
+    fn gas(&self) -> u128 {
+        self.inner.gas
     }
 
-    fn transaction_index(&self) -> Option<u64> {
-        self.inner.transaction_index()
-    }
-
-    fn signature(&self) -> Option<Self::Signature> {
-        self.inner.signature()
+    fn input(&self) -> &Bytes {
+        &self.inner.input
     }
 }
